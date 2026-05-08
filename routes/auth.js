@@ -8,7 +8,9 @@ const {
     requestPhoneOTP,
     requestMagicLink,
     registerLimiter,
-    loginLimiter
+    loginLimiter,
+    generateWebAuthnAuthentication, 
+    verifyWebAuthnAuthentication
 } = require('../controllers/authController');
 
 const router = express.Router();
@@ -20,6 +22,8 @@ router.post('/login', loginLimiter, loginUser);
 // WebAuthn passkey integration
 router.get('/webauthn/generate-registration', generateWebAuthnRegistration);
 router.post('/webauthn/verify-registration', verifyWebAuthnRegistration);
+router.get('/webauthn/generate-authentication', generateWebAuthnAuthentication);
+router.post('/webauthn/verify-authentication', verifyWebAuthnAuthentication);
 
 // Frictionless and 2FA authentication
 router.post('/login/2fa', verify2FALogin);
