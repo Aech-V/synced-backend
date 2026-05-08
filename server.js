@@ -19,6 +19,7 @@ const startVoidScrubber = require('./cron/voidScrubber');
 
 const app = express();
 const server = http.createServer(app);
+app.set('trust proxy', 1);
 
 // Cors Configuration
 const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:5173'];
