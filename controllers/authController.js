@@ -44,8 +44,16 @@ const generateSession = async (user, req) => {
         sessionId,
         user: { 
             id: user._id, 
+            _id: user._id,
             username: user.username, 
             email: user.email,
+            avatar: user.avatar,
+            about: user.about,
+            location: user.location,
+            phoneNumber: user.phoneNumber,
+            privacySettings: user.privacySettings,
+            notificationSettings: user.notificationSettings,
+            appLock: user.appLock,
             hasPasskey: user.passkeys && user.passkeys.length > 0
         } 
     };
