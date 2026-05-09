@@ -205,6 +205,7 @@ exports.findOrCreateDirectRoom = async (req, res) => {
         const currentUserId = req.user.id;
 
         let room = await Room.findOne({
+            name: uuidv4(),
             type: 'direct',
             'participants.userId': { $all: [currentUserId, targetUserId] }
         }).populate('participants.userId', 'username avatar isOnline');
