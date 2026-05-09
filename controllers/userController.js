@@ -7,7 +7,7 @@ const Ticket = require('../models/Ticket');
 const ReservedUsername = require('../models/ReservedUsername');
 const Otp = require('../models/Otp');
 const { authenticator } = require('otplib');
-const { cloudinary } = require('../config/cloudinary'); // Added Cloudinary import
+const { cloudinary } = require('../config/cloudinary');
 
 // @desc Search for users to add as contacts
 // @route GET /api/users/search
@@ -129,16 +129,19 @@ exports.getUserRooms = async (req, res) => {
             const participant = room.participants.find(p => p.userId && p.userId._id.toString() === req.user.id);
             const lastRead = participant?.lastReadTimestamp ? new Date(participant.lastReadTimestamp) : new Date(0);
 
+            // FIX: Combine lastReadTimestamp with actual Message status to prevent zombie badges
             const unreadCount = await Message.countDocuments({
                 roomId: room._id,
                 createdAt: { $gt: lastRead },
                 senderId: { $ne: req.user.id },
+                status: { $ne: 'read' }, // Forces DB to ignore messages marked as read
                 type: { $ne: 'system' }
             });
 
             const hasMention = await Message.exists({
                 roomId: room._id,
                 createdAt: { $gt: lastRead },
+                status: { $ne: 'read' }, // Ensures mentions also clear properly
                 text: { $regex: `@${currentUser.username}`, $options: 'i' }
             });
 
@@ -279,7 +282,6 @@ exports.uploadAvatar = async (req, res) => {
                     resolve(result);
                 }
             });
-            // Feed the buffer from memoryStorage directly into the Cloudinary stream
             stream.end(req.file.buffer);
         });
 
