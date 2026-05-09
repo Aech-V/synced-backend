@@ -244,7 +244,7 @@ exports.clearHistory = async (req, res) => {
                 'participants.userId': currentUserId 
             },
             { $set: { 'participants.$.clearedAt': new Date() } },
-            { new: true } 
+            { returnDocument: 'after' } 
         );
 
         if (!updatedRoom) {
