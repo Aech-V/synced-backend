@@ -8,7 +8,7 @@ exports.getChatHistory = async (req, res) => {
     try {
         const roomName = req.params.room;
         let targetRoom = await Room.findOne({ name: roomName });
-        
+
         if (!targetRoom) {
             targetRoom = await Room.create({ name: roomName, type: 'channel' });
             console.log(`[DB SETUP]: Created new Channel document for #${roomName}`);
@@ -16,16 +16,16 @@ exports.getChatHistory = async (req, res) => {
 
         const limit = parseInt(req.query.limit) || 50;
         const cursor = req.query.cursor;
-        const currentUserId = req.user.id; 
-        
-        const myParticipant = targetRoom.participants?.find(p => 
+        const currentUserId = req.user.id;
+
+        const myParticipant = targetRoom.participants?.find(p =>
             (p.userId?._id || p.userId).toString() === currentUserId.toString()
         );
         const clearThreshold = myParticipant?.clearedAt || new Date(0);
 
-        const query = { 
+        const query = {
             roomId: targetRoom._id,
-            createdAt: { $gt: clearThreshold } 
+            createdAt: { $gt: clearThreshold }
         };
 
         if (cursor) {
@@ -80,7 +80,7 @@ exports.uploadMedia = async (req, res) => {
             stream.end(req.file.buffer);
         });
 
-        res.status(200).json({ 
+        res.status(200).json({
             mediaUrl: result.secure_url,
             publicId: result.public_id,
             fileSize: req.file.size,
@@ -98,7 +98,7 @@ exports.burnMessage = async (req, res) => {
     try {
         const messageId = req.params.id;
         const message = await Message.findById(messageId);
-        
+
         if (!message) return res.status(404).json({ error: 'Message not found' });
 
         let mediaDestroyed = true;
@@ -106,7 +106,7 @@ exports.burnMessage = async (req, res) => {
         if (message.imageUrl && message.imageUrl.includes('cloudinary')) {
             const filename = message.imageUrl.split('/').pop().split('.')[0];
             const publicId = `synced_uploads/${filename}`;
-            
+
             try {
                 await cloudinary.uploader.destroy(publicId);
             } catch (err) {
@@ -118,7 +118,7 @@ exports.burnMessage = async (req, res) => {
         if (message.audioUrl && message.audioUrl.includes('cloudinary')) {
             const filename = message.audioUrl.split('/').pop().split('.')[0];
             const publicId = `synced_audio/${filename}`;
-            
+
             try {
                 await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
             } catch (err) {
@@ -128,10 +128,10 @@ exports.burnMessage = async (req, res) => {
         }
 
         if (!mediaDestroyed) {
-             message.isDeleted = true;
-             message.text = "[Media flagged for hard deletion sync]";
-             await message.save();
-             return res.status(202).json({ message: 'Target scheduled for cleanup engine due to network delay' });
+            message.isDeleted = true;
+            message.text = "[Media flagged for hard deletion sync]";
+            await message.save();
+            return res.status(202).json({ message: 'Target scheduled for cleanup engine due to network delay' });
         }
 
         await Message.findByIdAndDelete(messageId);
@@ -157,10 +157,10 @@ exports.searchMessages = async (req, res) => {
             text: { $regex: query, $options: 'i' },
             type: { $ne: 'system' }
         })
-        .populate('senderId', 'username avatar')
-        .populate('roomId', 'name type')
-        .sort({ createdAt: -1 })
-        .limit(15);
+            .populate('senderId', 'username avatar')
+            .populate('roomId', 'name type')
+            .sort({ createdAt: -1 })
+            .limit(15);
 
         res.status(200).json(messages);
     } catch (error) {
@@ -188,10 +188,10 @@ exports.searchFiles = async (req, res) => {
             ],
             ...(query && { text: { $regex: query, $options: 'i' } })
         })
-        .populate('senderId', 'username avatar')
-        .populate('roomId', 'name type')
-        .sort({ createdAt: -1 })
-        .limit(15);
+            .populate('senderId', 'username avatar')
+            .populate('roomId', 'name type')
+            .sort({ createdAt: -1 })
+            .limit(15);
 
         res.status(200).json(files);
     } catch (error) {
@@ -204,7 +204,7 @@ exports.searchFiles = async (req, res) => {
 // @route POST /api/messages/upload/audio
 exports.uploadAudio = async (req, res) => {
     try {
-        let fileData = req.body.audio; 
+        let fileData = req.body.audio;
         const isVoiceNote = req.body.isVoiceNote === true || req.body.isVoiceNote === 'true';
 
         if (!fileData) {
@@ -217,14 +217,14 @@ exports.uploadAudio = async (req, res) => {
         }
 
         const uploadOptions = {
-            resource_type: "video", 
+            resource_type: "video",
             folder: "synced_audio",
         };
 
         if (isVoiceNote) {
             uploadOptions.format = "mp3";
             uploadOptions.eager = [{ format: "mp3", audio_codec: "mp3" }];
-            uploadOptions.eager_async = false; 
+            uploadOptions.eager_async = false;
         }
 
         const result = await cloudinary.uploader.upload(fileData, uploadOptions);
@@ -265,9 +265,9 @@ exports.getRoomMedia = async (req, res) => {
                 { type: 'snippet' }
             ]
         })
-        .sort({ createdAt: -1 })
-        .select('imageUrl audioUrl type documentData snippetData createdAt')
-        .lean();
+            .sort({ createdAt: -1 })
+            .select('imageUrl audioUrl type documentData snippetData createdAt')
+            .lean();
 
         res.status(200).json({ success: true, data: mediaMessages });
     } catch (error) {
