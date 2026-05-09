@@ -99,8 +99,12 @@ module.exports = (io) => {
             socket.join(roomId);
             console.log(`[MATRIX]: User ${socket.userId} joined Room ${roomId}`);
 
+            // FIX: Safely support both ObjectId and Name lookups for exact timestamp syncing
+            const isObjectId = /^[0-9a-fA-F]{24}$/.test(roomId);
+            const roomQuery = isObjectId ? { $or: [{ name: roomId }, { _id: roomId }] } : { name: roomId };
+
             await Room.updateOne(
-                { name: roomId, "participants.userId": socket.userId },
+                { ...roomQuery, "participants.userId": socket.userId },
                 { $set: { "participants.$.lastReadTimestamp": new Date() } }
             );
         });
@@ -198,8 +202,13 @@ module.exports = (io) => {
         // Read Receipts
         socket.on('mark_as_read', async ({ messageId, roomId }) => {
             await Message.findByIdAndUpdate(messageId, { status: 'read' });
+            
+            // FIX: Safely update lastReadTimestamp for individual read receipts
+            const isObjectId = /^[0-9a-fA-F]{24}$/.test(roomId);
+            const roomQuery = isObjectId ? { $or: [{ name: roomId }, { _id: roomId }] } : { name: roomId };
+
             await Room.updateOne(
-                { name: roomId, "participants.userId": socket.userId },
+                { ...roomQuery, "participants.userId": socket.userId },
                 { $set: { "participants.$.lastReadTimestamp": new Date() } }
             );
 
@@ -422,12 +431,21 @@ module.exports = (io) => {
         // Bulk Read Status
         socket.on('mark_room_as_read', async ({ roomId }) => {
             try {
-                const room = await Room.findOne({ name: roomId });
+                // FIX: Support Room ID and Room Name dynamically
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(roomId);
+                const roomQuery = isObjectId ? { $or: [{ name: roomId }, { _id: roomId }] } : { name: roomId };
+                const room = await Room.findOne(roomQuery);
                 if (!room) return;
 
                 await Message.updateMany(
                     { roomId: room._id, senderId: { $ne: socket.userId }, status: { $ne: 'read' } },
                     { $set: { status: 'read' } }
+                );
+
+                // FIX: Explicitly update the lastReadTimestamp to prevent backend desyncs
+                await Room.updateOne(
+                    { _id: room._id, "participants.userId": socket.userId },
+                    { $set: { "participants.$.lastReadTimestamp": new Date() } }
                 );
 
                 socket.to(roomId).emit('room_messages_read', { roomId });
