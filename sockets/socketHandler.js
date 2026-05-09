@@ -141,6 +141,7 @@ module.exports = (io) => {
                     text: data.text,
                     imageUrl: data.imageUrl,
                     gifUrl: data.gifUrl,
+                    audioUrl: data.audioUrl,
                     stickerData: data.stickerData,
                     isEphemeral: data.isEphemeral || false,
                     replyTo: data.replyTo,

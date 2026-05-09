@@ -21,7 +21,7 @@ router.get('/history', protect, async (req, res) => {
 
         const calls = await CallLog.find(query)
             .populate('callerId', 'username avatar')
-            .populate('participants.userId', 'username avatar') // <--- THE FIX: Populates the actual user data inside the array
+            .populate('participants.userId', 'username avatar')
             .populate('roomId', 'name type participants')
             .sort({ _id: -1 })
             .limit(limit);
