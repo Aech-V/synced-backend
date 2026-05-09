@@ -388,11 +388,19 @@ module.exports = (io) => {
         // Synchronization
         socket.on('sync_missed_messages', async ({ roomId, lastMessageId }) => {
             try {
+                let resolvedRoomId = roomId;
+            
+                if (typeof roomId === 'string' && roomId.includes('-')) {
+                    const roomDoc = await Room.findOne({ name: roomId });
+                    if (!roomDoc) return;
+                    resolvedRoomId = roomDoc._id;
+                }
+
                 const lastMessage = await Message.findById(lastMessageId);
                 if (!lastMessage) return;
 
                 const missedMessages = await Message.find({
-                    roomId: roomId,
+                    roomId: resolvedRoomId,
                     createdAt: { $gt: lastMessage.createdAt }
                 }).sort({ createdAt: 1 }); 
 
@@ -400,7 +408,7 @@ module.exports = (io) => {
                     socket.emit('missed_messages_payload', { roomId, messages: missedMessages });
                 }
             } catch (error) {
-                console.error('Error syncing missed messages:', error);
+                console.error('[MATRIX WARN] Error syncing missed messages:', error.message);
             }
         });
 

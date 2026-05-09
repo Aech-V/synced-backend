@@ -238,9 +238,11 @@ exports.clearHistory = async (req, res) => {
     try {
         const { roomId } = req.params;
         const currentUserId = req.user.id;
-
         const updatedRoom = await Room.findOneAndUpdate(
-            { _id: roomId, 'participants.userId': currentUserId },
+            { 
+                $or: [{ _id: roomId }, { name: roomId }],
+                'participants.userId': currentUserId 
+            },
             { $set: { 'participants.$.clearedAt': new Date() } },
             { new: true } 
         );
