@@ -93,6 +93,10 @@ if (typeof startVoidScrubber === 'function') {
     startVoidScrubber();
 }
 
+app.get('/', (req, res) => {
+    res.status(200).send('Server is up and running!');
+});
+
 // Start Listening
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
