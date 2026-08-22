@@ -13,8 +13,8 @@ authenticator.options = { window: [1, 1] };
 
 // WebAuthn configuration constants
 const rpName = 'Synced Super-App';
-const rpID = 'localhost';
-const origin = `http://${rpID}:5173`;
+const rpID = process.env.RP_ID || 'localhost';
+const origin = process.env.EXPECTED_ORIGIN || 'http://localhost:5173';
 
 // Helper to generate secure session
 const generateSession = async (user, req) => {
